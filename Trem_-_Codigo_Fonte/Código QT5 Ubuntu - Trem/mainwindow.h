@@ -1,8 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
 #include "trem.h"
+
+#include <QMainWindow>
+
+#include <memory>
 
 namespace Ui {
 class MainWindow;
@@ -13,20 +16,18 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
-
+    explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;
 
 public slots:
-    void updateInterface(int,int,int);
+    void updateInterface(int id, int x, int y);
 
 private slots:
     void on_pushButton_clicked();
-
     void on_pushButton_2_clicked();
 
 private:
-    Ui::MainWindow *ui;
+    std::unique_ptr<Ui::MainWindow> ui;
 
     //Cria os objetos TREM's
     Trem *trem1;
