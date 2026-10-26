@@ -4,6 +4,7 @@
 #include <QMutex>
 #include <QPoint>
 #include <QRect>
+#include <QSemaphore>
 #include <QThread>
 
 #include <atomic>
@@ -17,6 +18,14 @@ struct Regiao
     QMutex mutex{};  // só um trem por vez pode ocupar o trecho
 };
 
+// Região crítica da rota de um trem e os semáforos usados ao entrar nela
+struct Trecho
+{
+    Regiao *regiao;
+    std::vector<QSemaphore *> adquirir;  // adquiridos antes de travar a região
+    std::vector<QSemaphore *> liberar;   // liberados logo depois de travar a região
+};
+
 /*
  * Classe Trem herda QThread
  * Classe Trem passa a ser uma thread.
@@ -25,7 +34,8 @@ struct Regiao
  *
  * O trem percorre o contorno do seu trilho no sentido anti-horário. A rota lista as
  * regiões críticas na ordem em que o trem passa por elas: antes de encostar numa
- * região, o trem trava o seu mutex; depois de sair dela por completo, destrava.
+ * região, o trem adquire os semáforos do trecho e trava o mutex da região; depois
+ * de sair dela por completo, destrava.
  */
 class Trem : public QThread
 {
@@ -36,7 +46,7 @@ public:
     static constexpr int VELOCIDADE_MAXIMA = 200;
 
     // trilho: retângulo percorrido pelo canto superior esquerdo do trem
-    Trem(int id, QRect trilho, QPoint inicio, std::vector<Regiao *> rota,
+    Trem(int id, QRect trilho, QPoint inicio, std::vector<Trecho> rota,
          QObject *parent = nullptr);
 
     // Pede para a thread terminar assim que o trem deixar as regiões críticas
@@ -61,8 +71,8 @@ private:
     const int id;
     const QRect trilho;
     QPoint posicao;
-    const std::vector<Regiao *> rota;
-    std::size_t proximaRegiao = 0;         // índice, na rota, da próxima região crítica
+    const std::vector<Trecho> rota;
+    std::size_t proximoTrecho = 0;         // índice, na rota, da próxima região crítica
     std::deque<Regiao *> regioesOcupadas;  // regiões travadas, da mais antiga à mais nova
     std::atomic<int> velocidade{0};        // alterada pela interface, lida pela thread do trem
 };

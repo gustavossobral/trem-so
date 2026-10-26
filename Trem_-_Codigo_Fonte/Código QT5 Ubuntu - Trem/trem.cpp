@@ -17,7 +17,7 @@ QRect areaDoTrem(QPoint posicao)
 
 } // namespace
 
-Trem::Trem(int id, QRect trilho, QPoint inicio, std::vector<Regiao *> rota, QObject *parent)
+Trem::Trem(int id, QRect trilho, QPoint inicio, std::vector<Trecho> rota, QObject *parent)
     : QThread(parent), id(id), trilho(trilho), posicao(inicio), rota(std::move(rota))
 {
 }
@@ -80,20 +80,26 @@ QPoint Trem::proximaPosicao() const
 }
 
 // Trava a próxima região da rota no passo em que o trem vai encostar nela.
-// Se outro trem estiver na região, a thread fica bloqueada aqui até ele sair.
+// Se um semáforo não tiver permissão livre ou outro trem estiver na região,
+// a thread fica bloqueada aqui até poder seguir.
 void Trem::entrarNaProximaRegiao(QPoint destino)
 {
     // A posição atual também é testada porque, numa rota com duas regiões, a
     // próxima da rota é justamente aquela de onde o trem ainda está saindo
-    Regiao *regiao = rota[proximaRegiao];
-    const bool vaiEncostar = !areaDoTrem(posicao).intersects(regiao->area)
-                             && areaDoTrem(destino).intersects(regiao->area);
+    const Trecho &trecho = rota[proximoTrecho];
+    const bool vaiEncostar = !areaDoTrem(posicao).intersects(trecho.regiao->area)
+                             && areaDoTrem(destino).intersects(trecho.regiao->area);
     if (!vaiEncostar)
         return;
 
-    regiao->mutex.lock();
-    regioesOcupadas.push_back(regiao);
-    proximaRegiao = (proximaRegiao + 1) % rota.size();
+    for (QSemaphore *semaforo : trecho.adquirir)
+        semaforo->acquire();
+    trecho.regiao->mutex.lock();
+    for (QSemaphore *semaforo : trecho.liberar)
+        semaforo->release();
+
+    regioesOcupadas.push_back(trecho.regiao);
+    proximoTrecho = (proximoTrecho + 1) % rota.size();
 }
 
 // Destrava as regiões que o trem já deixou por completo

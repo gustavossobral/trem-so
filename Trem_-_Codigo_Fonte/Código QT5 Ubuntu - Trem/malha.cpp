@@ -26,6 +26,25 @@ QRect faixa(QPoint inicio, QPoint fim)
 
 } // namespace
 
+/*
+ * Como os deadlocks são evitados
+ *
+ * As regiões críticas se encontram em quatro cruzamentos: superior (regiões 1, 2
+ * e 3), central (3, 5 e 6), esquerdo (4, 5 e 8) e direito (6, 7 e 9). Em cada um,
+ * três trens fazem a curva e cada trem sai por uma região pela qual outro entra.
+ * Se os três chegam juntos, cada um espera a região do próximo e nenhum anda.
+ *
+ * Por isso cada cruzamento tem um semáforo com duas permissões: o trem adquire uma
+ * antes de entrar na região que leva ao cruzamento e a libera logo depois de entrar
+ * na região seguinte. Com no máximo dois trens no cruzamento, a espera circular não
+ * se fecha.
+ *
+ * Os trens b, c e e passam por três cruzamentos, sempre com o central no meio. Se
+ * cada um esperasse o semáforo do cruzamento seguinte segurando o do anterior,
+ * eles poderiam se esperar em ciclo de um cruzamento para outro. Para evitar isso,
+ * todos adquirem os semáforos na mesma ordem: o do cruzamento central primeiro,
+ * já na entrada do percurso compartilhado.
+ */
 Malha::Malha()
     : regioes{{
           {faixa({X1, Y1}, {X3, Y1})},  // 1: trens a e b
@@ -39,20 +58,56 @@ Malha::Malha()
           {faixa({X4, Y2}, {X4, Y3})},  // 9: trens e e f
       }}
 {
+    QSemaphore *superior = &cruzamentoSuperior;
+    QSemaphore *central = &cruzamentoCentral;
+    QSemaphore *esquerdo = &cruzamentoEsquerdo;
+    QSemaphore *direito = &cruzamentoDireito;
+
     // Cada trem começa num trecho que não é compartilhado com outro trem. A rota
-    // lista as regiões críticas na ordem em que o trem passa por elas a partir dali.
-    criarTrem({X1, Y0}, {X5, Y1}, {X3, Y0},
-              {regiao(1), regiao(2)});                         // a
-    criarTrem({X1, Y1}, {X3, Y2}, {X1, (Y1 + Y2) / 2},
-              {regiao(4), regiao(5), regiao(3), regiao(1)});   // b
-    criarTrem({X3, Y1}, {X5, Y2}, {X5, (Y1 + Y2) / 2},
-              {regiao(2), regiao(3), regiao(6), regiao(7)});   // c
-    criarTrem({X0, Y2}, {X2, Y3}, {X0, (Y2 + Y3) / 2},
-              {regiao(8), regiao(4)});                         // d
-    criarTrem({X2, Y2}, {X4, Y3}, {X3, Y3},
-              {regiao(9), regiao(6), regiao(5), regiao(8)});   // e
-    criarTrem({X4, Y2}, {X6, Y3}, {X6, (Y2 + Y3) / 2},
-              {regiao(7), regiao(9)});                         // f
+    // lista as regiões críticas na ordem em que o trem passa por elas a partir dali
+    // e, para cada uma, os semáforos adquiridos antes e liberados depois de entrar.
+
+    // a
+    criarTrem({X1, Y0}, {X5, Y1}, {X3, Y0}, {
+        {regiao(1), {superior}, {}},
+        {regiao(2), {}, {superior}},
+    });
+
+    // b
+    criarTrem({X1, Y1}, {X3, Y2}, {X1, (Y1 + Y2) / 2}, {
+        {regiao(4), {central, esquerdo}, {}},
+        {regiao(5), {}, {esquerdo}},
+        {regiao(3), {superior}, {central}},
+        {regiao(1), {}, {superior}},
+    });
+
+    // c
+    criarTrem({X3, Y1}, {X5, Y2}, {X5, (Y1 + Y2) / 2}, {
+        {regiao(2), {central, superior}, {}},
+        {regiao(3), {}, {superior}},
+        {regiao(6), {direito}, {central}},
+        {regiao(7), {}, {direito}},
+    });
+
+    // d
+    criarTrem({X0, Y2}, {X2, Y3}, {X0, (Y2 + Y3) / 2}, {
+        {regiao(8), {esquerdo}, {}},
+        {regiao(4), {}, {esquerdo}},
+    });
+
+    // e
+    criarTrem({X2, Y2}, {X4, Y3}, {X3, Y3}, {
+        {regiao(9), {central, direito}, {}},
+        {regiao(6), {}, {direito}},
+        {regiao(5), {esquerdo}, {central}},
+        {regiao(8), {}, {esquerdo}},
+    });
+
+    // f
+    criarTrem({X4, Y2}, {X6, Y3}, {X6, (Y2 + Y3) / 2}, {
+        {regiao(7), {direito}, {}},
+        {regiao(9), {}, {direito}},
+    });
 }
 
 // Pede para todas as threads terminarem e só então espera cada uma sair do laço
@@ -75,7 +130,7 @@ Regiao *Malha::regiao(int numero)
 }
 
 void Malha::criarTrem(QPoint cantoSuperiorEsquerdo, QPoint cantoInferiorDireito, QPoint inicio,
-                      std::vector<Regiao *> rota)
+                      std::vector<Trecho> rota)
 {
     const int id = static_cast<int>(trens.size());
     const QRect trilho(cantoSuperiorEsquerdo, cantoInferiorDireito);
