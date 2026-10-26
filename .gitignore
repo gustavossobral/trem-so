@@ -1,0 +1,12 @@
+# Configurações locais do Qt Creator (específicas de cada máquina)
+*.pro.user
+*.pro.user.*
+
+# Artefatos de build (qmake/Qt Creator)
+build/
+build-*/
+Makefile
+.qmake.stash
+*.o
+moc_*
+ui_*.h
