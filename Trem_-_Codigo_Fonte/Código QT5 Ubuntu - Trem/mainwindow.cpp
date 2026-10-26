@@ -9,6 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     labelsTrens = {ui->tremA, ui->tremB, ui->tremC, ui->tremD, ui->tremE, ui->tremF};
     slidersVelocidade = {ui->velocidadeA, ui->velocidadeB, ui->velocidadeC,
                          ui->velocidadeD, ui->velocidadeE, ui->velocidadeF};
+    ui->velocidadeMestre->setMaximum(Trem::VELOCIDADE_MAXIMA);
 
     for (int id = 0; id < Malha::QUANTIDADE_TRENS; ++id) {
         Trem &trem = malha.trem(id);
@@ -21,6 +22,9 @@ MainWindow::MainWindow(QWidget *parent)
         slider->setMaximum(Trem::VELOCIDADE_MAXIMA);
         connect(slider, &QSlider::valueChanged, &trem, &Trem::setVelocidade);
         trem.setVelocidade(slider->value());
+
+        // O controle mestre sobrescreve a velocidade de todos os trens movendo os seus sliders
+        connect(ui->velocidadeMestre, &QSlider::valueChanged, slider, &QSlider::setValue);
 
         // Os trens começam a andar assim que a janela é aberta
         trem.start();
