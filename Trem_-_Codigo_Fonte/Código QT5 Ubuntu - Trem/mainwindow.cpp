@@ -8,8 +8,8 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
 
     //Cria o trem com seu (ID, posição X, posição Y)
-    trem1 = new Trem(1, 60, 30);
-    trem2 = new Trem(2, 330, 30);
+    trem1 = std::make_unique<Trem>(1, 60, 30);
+    trem2 = std::make_unique<Trem>(2, 330, 30);
 
     /*
      * Conecta o sinal UPDATEGUI à função UPDATEINTERFACE.
@@ -18,11 +18,22 @@ MainWindow::MainWindow(QWidget *parent)
      * Trem1 e Trem2 são os objetos que podem chamar o sinal. Se um outro objeto chamar o
      * sinal UPDATEGUI, não haverá execução da função UPDATEINTERFACE
      */
-    connect(trem1, &Trem::updateGUI, this, &MainWindow::updateInterface);
-    connect(trem2, &Trem::updateGUI, this, &MainWindow::updateInterface);
+    connect(trem1.get(), &Trem::updateGUI, this, &MainWindow::updateInterface);
+    connect(trem2.get(), &Trem::updateGUI, this, &MainWindow::updateInterface);
+
+    //Os trens começam a andar assim que a janela é aberta
+    trem1->start();
+    trem2->start();
 }
 
-MainWindow::~MainWindow() = default;
+//Ao fechar a janela, pede para as threads terminarem e espera cada uma sair do laço
+MainWindow::~MainWindow()
+{
+    trem1->requestInterruption();
+    trem2->requestInterruption();
+    trem1->wait();
+    trem2->wait();
+}
 
 //Função que será executada quando o sinal UPDATEGUI for emitido
 void MainWindow::updateInterface(int id, int x, int y)
@@ -37,22 +48,4 @@ void MainWindow::updateInterface(int id, int x, int y)
     default:
         break;
     }
-}
-
-/*
- * Ao clicar, trens começam execução
- */
-void MainWindow::on_pushButton_clicked()
-{
-    trem1->start();
-    trem2->start();
-}
-
-/*
- * Ao clicar, trens param execução
- */
-void MainWindow::on_pushButton_2_clicked()
-{
-    trem1->terminate();
-    trem2->terminate();
 }

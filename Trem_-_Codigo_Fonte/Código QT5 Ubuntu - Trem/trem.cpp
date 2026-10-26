@@ -9,7 +9,7 @@ Trem::Trem(int id, int x, int y, QObject *parent)
 //Função a ser executada após executar trem->START
 void Trem::run()
 {
-    while (true) {
+    while (!isInterruptionRequested()) {
         switch (id) {
         case 1:     //Trem 1
             if (y == 30 && x < 330)

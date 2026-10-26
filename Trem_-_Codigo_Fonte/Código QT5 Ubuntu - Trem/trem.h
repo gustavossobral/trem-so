@@ -7,7 +7,7 @@
  * Classe Trem herda QThread
  * Classe Trem passa a ser uma thread.
  * A função START inicializa a thread. Após inicializada, a thread irá executar a função RUN.
- * Para parar a execução da função RUN da thread, basta executar a função TERMINATE.
+ * Para parar a execução da função RUN da thread, basta executar a função REQUESTINTERRUPTION.
  *
 */
 class Trem : public QThread
