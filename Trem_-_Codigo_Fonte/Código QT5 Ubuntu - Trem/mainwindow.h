@@ -1,10 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "trem.h"
+#include "malha.h"
 
+#include <QLabel>
 #include <QMainWindow>
 
+#include <array>
 #include <memory>
 
 namespace Ui {
@@ -24,10 +26,10 @@ public slots:
 
 private:
     std::unique_ptr<Ui::MainWindow> ui;
+    std::array<QLabel *, Malha::QUANTIDADE_TRENS> labelsTrens;
 
-    //Cria os objetos TREM's
-    std::unique_ptr<Trem> trem1;
-    std::unique_ptr<Trem> trem2;
+    // Declarada por último para ser destruída primeiro: os trens param antes da interface
+    Malha malha;
 };
 
 #endif // MAINWINDOW_H

@@ -16,9 +16,11 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
+    malha.cpp \
     trem.cpp
 
 HEADERS  += mainwindow.h \
+    malha.h \
     trem.h
 
 FORMS    += mainwindow.ui
