@@ -5,6 +5,8 @@
 #include <QRect>
 #include <QThread>
 
+#include <atomic>
+
 /*
  * Classe Trem herda QThread
  * Classe Trem passa a ser uma thread.
@@ -18,8 +20,14 @@ class Trem : public QThread
     Q_OBJECT
 
 public:
+    static constexpr int VELOCIDADE_MAXIMA = 200;
+
     // trilho: retângulo percorrido pelo canto superior esquerdo do trem
     Trem(int id, QRect trilho, QPoint inicio, QObject *parent = nullptr);
+
+public slots:
+    // 0 para o trem; VELOCIDADE_MAXIMA o deixa quase invisível de tão rápido
+    void setVelocidade(int velocidade);
 
 signals:
     void updateGUI(int id, int x, int y);
@@ -33,7 +41,7 @@ private:
     const int id;
     const QRect trilho;
     QPoint posicao;
-    int velocidade = 5;  // tempo, em milissegundos, entre um passo e outro
+    std::atomic<int> velocidade{0};  // alterada pela interface, lida pela thread do trem
 };
 
 #endif // TREM_H

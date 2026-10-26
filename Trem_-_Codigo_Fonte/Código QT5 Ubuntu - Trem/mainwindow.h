@@ -5,6 +5,7 @@
 
 #include <QLabel>
 #include <QMainWindow>
+#include <QSlider>
 
 #include <array>
 #include <memory>
@@ -27,6 +28,7 @@ public slots:
 private:
     std::unique_ptr<Ui::MainWindow> ui;
     std::array<QLabel *, Malha::QUANTIDADE_TRENS> labelsTrens;
+    std::array<QSlider *, Malha::QUANTIDADE_TRENS> slidersVelocidade;
 
     // Declarada por último para ser destruída primeiro: os trens param antes da interface
     Malha malha;
