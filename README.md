@@ -11,9 +11,20 @@ código-fonte disponibilizado no SIGAA.
 
 ## Como compilar e executar
 
-É preciso ter o Qt 5 (no Ubuntu, o pacote `qtbase5-dev`) e um compilador com C++17.
+### Requisitos
 
-No Qt Creator, basta abrir `Trem.pro` e executar. Pelo terminal:
+- Ubuntu (ou outra distribuição Linux com ambiente gráfico)
+- Qt 5, `qmake` e um compilador com suporte a C++17
+
+Para instalar tudo no Ubuntu:
+
+```sh
+sudo apt install build-essential qtbase5-dev qt5-qmake
+```
+
+O Qt Creator é opcional (`sudo apt install qtcreator`).
+
+### Pelo terminal
 
 ```sh
 cd "Trem_-_Codigo_Fonte/Código QT5 Ubuntu - Trem"
@@ -22,6 +33,36 @@ qmake ../Trem.pro
 make
 ./Trem
 ```
+
+A pasta `build/` é ignorada pelo Git. Para recompilar depois de alterar o código,
+basta rodar `make` de novo dentro dela.
+
+### Pelo Qt Creator
+
+Abra `Trem.pro` (File → Open File or Project), escolha o kit padrão e execute
+com Ctrl+R.
+
+### Problemas comuns
+
+- **`qmake: command not found`**: o Qt 5 não está instalado; veja os requisitos acima.
+- **O programa fecha logo ao abrir com `GLib-GIO-ERROR: Settings schema
+  'org.gnome.settings-daemon.plugins.xsettings' does not contain a key named
+  'antialiasing'`**: o Qt está lendo configurações do GNOME incompatíveis,
+  comum no terminal integrado de um VS Code instalado via snap. Rode o programa
+  em um terminal comum do sistema ou desative o tema da plataforma:
+
+  ```sh
+  QT_QPA_PLATFORMTHEME= ./Trem
+  ```
+
+  Se ainda falhar no terminal do VS Code, limpe também a variável do snap:
+
+  ```sh
+  env -u GSETTINGS_SCHEMA_DIR QT_QPA_PLATFORMTHEME= ./Trem
+  ```
+
+- **`QSocketNotifier: Can only be used with threads started with QThread`**:
+  é apenas um aviso do Qt e não impede o funcionamento.
 
 ## Organização do código
 
