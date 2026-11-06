@@ -2,7 +2,7 @@
 
 Trabalho de Sistemas Operacionais (IMD0036 - 2026.2).
 
-Autor: Gustavo Sobral
+Autores: Gustavo Henrique de Sousa Sobral e Álvaro Barbosa Filho
 
 Controlador de uma malha ferroviária com seis trens (a até f) que circulam no
 sentido anti-horário, cada um em sua própria thread, sem colisões e sem deadlocks.
