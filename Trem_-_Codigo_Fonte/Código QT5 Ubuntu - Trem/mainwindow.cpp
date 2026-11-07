@@ -15,25 +15,23 @@ MainWindow::MainWindow(QWidget *parent)
         Trem &trem = malha.trem(id);
         QSlider *slider = slidersVelocidade.at(id);
 
-        // Sempre que o trem emitir UPDATEGUI, UPDATEINTERFACE move o seu quadrado na tela
+        // thread do trem -> interface
         connect(&trem, &Trem::updateGUI, this, &MainWindow::updateInterface);
 
-        // Cada slider controla a velocidade do seu trem
+        // slider -> velocidade do trem
         slider->setMaximum(Trem::VELOCIDADE_MAXIMA);
         connect(slider, &QSlider::valueChanged, &trem, &Trem::setVelocidade);
         trem.setVelocidade(slider->value());
 
-        // O controle mestre sobrescreve a velocidade de todos os trens movendo os seus sliders
+        // controle mestre
         connect(ui->velocidadeMestre, &QSlider::valueChanged, slider, &QSlider::setValue);
 
-        // Os trens começam a andar assim que a janela é aberta
-        trem.start();
+        trem.start();  // inicia a thread
     }
 }
 
 MainWindow::~MainWindow() = default;
 
-// Função executada quando o sinal UPDATEGUI é emitido
 void MainWindow::updateInterface(int id, int x, int y)
 {
     labelsTrens.at(id)->move(x, y);

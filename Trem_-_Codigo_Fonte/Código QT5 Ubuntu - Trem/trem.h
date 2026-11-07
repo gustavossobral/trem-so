@@ -11,56 +11,43 @@
 #include <deque>
 #include <vector>
 
-// Região crítica: trecho de trilho compartilhado por dois trens
+// região crítica
 struct Regiao
 {
-    QRect area;      // pixels ocupados por um trem enquanto passa pelo trecho
-    QMutex mutex{};  // só um trem por vez pode ocupar o trecho
+    QRect area;
+    QMutex mutex{};  // um trem por vez
 };
 
-// Região crítica da rota de um trem e os semáforos usados ao entrar nela
+// região da rota e semáforos do cruzamento
 struct Trecho
 {
     Regiao *regiao;
-    std::vector<QSemaphore *> adquirir;  // adquiridos antes de travar a região
-    std::vector<QSemaphore *> liberar;   // liberados logo depois de travar a região
+    std::vector<QSemaphore *> adquirir;  // antes de travar o mutex
+    std::vector<QSemaphore *> liberar;   // depois de travar o mutex
 };
 
-/*
- * Classe Trem herda QThread
- * Classe Trem passa a ser uma thread.
- * A função START inicializa a thread. Após inicializada, a thread irá executar a função RUN.
- * Para parar a execução da função RUN da thread, basta executar a função ENCERRAR.
- *
- * O trem percorre o contorno do seu trilho no sentido anti-horário. A rota lista as
- * regiões críticas na ordem em que o trem passa por elas: antes de encostar numa
- * região, o trem adquire os semáforos do trecho e trava o mutex da região; depois
- * de sair dela por completo, destrava.
- */
+// cada trem é uma thread
 class Trem : public QThread
 {
     Q_OBJECT
 
 public:
-    static constexpr int TAMANHO = 20;  // lado, em pixels, do quadrado que representa o trem
+    static constexpr int TAMANHO = 20;  // lado do trem, em px
     static constexpr int VELOCIDADE_MAXIMA = 200;
 
-    // trilho: retângulo percorrido pelo canto superior esquerdo do trem
     Trem(int id, QRect trilho, QPoint inicio, std::vector<Trecho> rota,
          QObject *parent = nullptr);
 
-    // Pede para a thread terminar assim que o trem deixar as regiões críticas
-    void encerrar();
+    void encerrar();  // pede para a thread terminar
 
 public slots:
-    // 0 para o trem; VELOCIDADE_MAXIMA o deixa quase invisível de tão rápido
     void setVelocidade(int velocidade);
 
 signals:
     void updateGUI(int id, int x, int y);
 
 protected:
-    void run() override;
+    void run() override;  // corpo da thread
 
 private:
     void andar();
@@ -72,9 +59,9 @@ private:
     const QRect trilho;
     QPoint posicao;
     const std::vector<Trecho> rota;
-    std::size_t proximoTrecho = 0;         // índice, na rota, da próxima região crítica
-    std::deque<Regiao *> regioesOcupadas;  // regiões travadas, da mais antiga à mais nova
-    std::atomic<int> velocidade{0};        // alterada pela interface, lida pela thread do trem
+    std::size_t proximoTrecho = 0;
+    std::deque<Regiao *> regioesOcupadas;  // mutexes travados
+    std::atomic<int> velocidade{0};        // escrita pela interface, lida pela thread
 };
 
-#endif // TREM_H
+#endif

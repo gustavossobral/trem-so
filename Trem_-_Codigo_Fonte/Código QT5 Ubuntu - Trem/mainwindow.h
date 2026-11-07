@@ -30,8 +30,7 @@ private:
     std::array<QLabel *, Malha::QUANTIDADE_TRENS> labelsTrens;
     std::array<QSlider *, Malha::QUANTIDADE_TRENS> slidersVelocidade;
 
-    // Declarada por último para ser destruída primeiro: os trens param antes da interface
-    Malha malha;
+    Malha malha;  // por último: destruída primeiro
 };
 
-#endif // MAINWINDOW_H
+#endif
