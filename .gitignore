@@ -10,3 +10,6 @@ Makefile
 *.o
 moc_*
 ui_*.h
+
+# Configurações locais do VS Code
+.vscode/
